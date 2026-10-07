@@ -12,10 +12,9 @@ const result = document.createElement('div')
 result.id = 'result'
 body.append(result)
 
-const coords = document.createElement('div')
-coords.classList.add('coords')
-coords.innerText = 'Координаты: ...'
-body.append(coords)
+const resultCoords = document.createElement('div')
+resultCoords.id = 'resultCoords'
+body.append(resultCoords)
 
 function createIcon(){
     const img = document.createElement('img')
@@ -48,13 +47,13 @@ function createItem(label, value){
     const item = document.createElement('div')
     item.classList.add('item')
     
-    const labelEl = document.createElement('span')
+    const labelEl = document.createElement('p')
     labelEl.classList.add('label')
     labelEl.innerText = label
     
-    const valueEl = document.createElement('span')
+    const valueEl = document.createElement('p')
     valueEl.classList.add('value')
-    valueEl.innerText = value || 'Н/Д'
+    valueEl.innerText = value || 'нет данных'
     
     item.append(labelEl, valueEl)
     
@@ -78,6 +77,26 @@ function showAircraft(data){
     result.append(card)
 }
 
+function showCoords(data){
+    resultCoords.innerText = ''
+
+    const originLat = data.origin.latitude
+    const originLng = data.origin.longitude
+
+    const dastLat = data.destination.latitude
+    const dastLng = data.destination.longitude
+
+    const coord_container = document.createElement('div')
+    coord_container.classList.add('coords')
+
+    coord_container.append(createItem('Широта места отправления', originLat))
+    coord_container.append(createItem('Долгота места отправления', originLng))
+    coord_container.append(createItem('Широта места прибытия', dastLat))
+    coord_container.append(createItem('Долгота места прибытия', dastLng))
+
+    resultCoords.append(coord_container)
+}
+
 function loadAircraft(){
     fetch('https://api.adsbdb.com/v0/aircraft/random')
         .then(response => response.json())
@@ -89,10 +108,27 @@ function loadAircraft(){
         .catch(()=>{
             result.innerText = 'Ошибка загрузки'
         })
-        .finally(()=>{
+        .then(()=>{
             btn.innerText = 'Показать другой'
         })
 }
 
-btn.addEventListener('click', loadAircraft)
+function loadCallsign(){
+    fetch('https://api.adsbdb.com/v0/callsign/random')
+        .then(response => response.json())
+        .then(data=>{
+            if(data.response && data.response.callsign){
+                showCoords(data.response.callsign)
+            }
+        })
+        .catch(()=>{
+            resultCoords.innerText = 'Ошибка загрузки'
+        })
+        .then(()=>{
+            btn.innerText = 'Показать другой'
+        })
+}
+
+btn.addEventListener('click', loadAircraft, loadCallsign)
 loadAircraft()
+loadCallsign()
