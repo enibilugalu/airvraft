@@ -7,7 +7,6 @@
 
 body {
     font-family: Arial, sans-serif;
-    font-size: var(--font-size);
     background: #f1f8e9;
     padding: 32px;
     display: flex;
@@ -65,7 +64,7 @@ button:hover {
 .image-box img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .icon {
@@ -90,4 +89,20 @@ button:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     font-size: 14px;
     color: #2e7d32;
+}
+
+.selectDiv{
+    background: #2e7d32;
+    color: white;
+    width: 25%;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    margin-right: auto;
+
+}
+
+.selectDiv:hover {
+    background: #4caf50;
 }
