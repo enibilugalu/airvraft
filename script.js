@@ -1,20 +1,32 @@
 const body = document.body
 
-const h1 = document.createElement('h1')
-h1.innerText = 'Aircraft'
-body.append(h1)
+function createEl({nameEl, textEl, classNames = [], parentEl} = {}){
+    const el = document.createElement(nameEl)
 
-const btn = document.createElement('button')
-btn.innerText = 'Показать другой'
-body.append(btn)
+    if(!!textEl){
+        el.innerText = textEl
+    }
+    
+    if(classNames.length > 0){
+        el.classList.add(...classNames)
+    }
 
-const result = document.createElement('div')
-result.id = 'result'
-body.append(result)
+    if(!!parentEl){
+        parentEl.append(el)
+    }
 
-const resultCoords = document.createElement('div')
-resultCoords.id = 'resultCoords'
-body.append(resultCoords)
+    return el
+}
+
+const mainCont = createEl({nameEl: 'div', classNames: ['main'], textEl: '', parentEl: body})
+const h1 = createEl({nameEl: 'h1', textEl: 'Aircraft', classNames: ['header'],  parentEl: mainCont})
+const btn = createEl({nameEl: 'button', textEl: 'Показать другой', parentEl: mainCont})
+const result = createEl({nameEl: 'div', classNames: ['result'], parentEl: mainCont})
+const resultCoords = createEl({nameEl: 'div', classNames: ['resultCoords'], parentEl: mainCont})
+
+const map = document.createElement('div')
+    map.id = 'map'
+    mainCont.append(map)
 
 function createIcon(){
     const img = document.createElement('img')
@@ -66,36 +78,24 @@ function showAircraft(data){
     const card = document.createElement('div')
     card.classList.add('card')
     
+    let registration = data.registration
+    let mode_s = data.mode_s
+    let type = data.type
+    let manufacturer = data.manufacturer
+    let registered_owner = data.registered_owner
+    let owner_country = data.registered_owner_country_name
+
     card.append(createImageBox(data.url_photo))
-    card.append(createItem('Регистрация', data.registration))
-    card.append(createItem('Mode S', data.mode_s))
-    card.append(createItem('Тип', data.type))
-    card.append(createItem('Производитель', data.manufacturer))
-    card.append(createItem('Владелец', data.registered_owner))
-    card.append(createItem('Страна', data.registered_owner_country_name))
+    card.append(createItem('Регистрация', registration))
+    card.append(createItem('Mode S', mode_s))
+    card.append(createItem('Тип', type))
+    card.append(createItem('Производитель', manufacturer))
+    card.append(createItem('Владелец', registered_owner))
+    card.append(createItem('Страна', owner_country))
     
     result.append(card)
 }
 
-function showCoords(data){
-    resultCoords.innerText = ''
-
-    const originLat = data.origin.latitude
-    const originLng = data.origin.longitude
-
-    const dastLat = data.destination.latitude
-    const dastLng = data.destination.longitude
-
-    const coord_container = document.createElement('div')
-    coord_container.classList.add('coords')
-
-    coord_container.append(createItem('Широта места отправления', originLat))
-    coord_container.append(createItem('Долгота места отправления', originLng))
-    coord_container.append(createItem('Широта места прибытия', dastLat))
-    coord_container.append(createItem('Долгота места прибытия', dastLng))
-
-    resultCoords.append(coord_container)
-}
 
 function loadAircraft(){
     fetch('https://api.adsbdb.com/v0/aircraft/random')
@@ -117,18 +117,68 @@ function loadCallsign(){
     fetch('https://api.adsbdb.com/v0/callsign/random')
         .then(response => response.json())
         .then(data=>{
-            if(data.response && data.response.callsign){
-                showCoords(data.response.callsign)
+            if(data.response && data.response.flightroute){
+                
+                showCoords(data.response.flightroute)
             }
         })
         .catch(()=>{
             resultCoords.innerText = 'Ошибка загрузки'
         })
-        .then(()=>{
-            btn.innerText = 'Показать другой'
-        })
 }
 
-btn.addEventListener('click', loadAircraft, loadCallsign)
+btn.addEventListener('click', () => {
+    loadAircraft()
+    loadCallsign()
+})
+
 loadAircraft()
 loadCallsign()
+
+function MAP(data){
+    let map = L.map('map').setView([data.origin.latitude, data.origin.longitude], 13)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+
+    return map
+    
+}
+let mapBox = MAP({
+    origin: {
+        latitude: 51.505,
+        longitude:  -0.09,
+    }
+})
+
+
+
+
+function showCoords(data){
+    resultCoords.innerText = ''
+
+    const coord_container = document.createElement('div')
+    coord_container.classList.add('coords')
+
+    coord_container.append(createItem('Широта места отправления', data.origin.latitude))
+    coord_container.append(createItem('Долгота места отправления', data.origin.longitude))
+    coord_container.append(createItem('Широта места прибытия', data.destination.latitude))
+    coord_container.append(createItem('Долгота места прибытия', data.destination.longitude))
+
+    resultCoords.append(coord_container)
+
+    let testBtn =createEl({nameEl: 'button', textEl: 'test', parentEl: document.body})
+    testBtn.addEventListener('click', () =>{
+      mapBox.setView([data.origin.latitude, data.origin.longitude], 4) 
+ 
+        /*  MAP({
+            origin: {
+                latitude: data.origin.latitude,
+                longitude:  data.origin.longitude,
+            }
+        })  */
+    })
+
+  
+}
