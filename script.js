@@ -1,184 +1,266 @@
 const body = document.body
 
-function createEl({nameEl, textEl, classNames = [], parentEl} = {}){
-    const el = document.createElement(nameEl)
+const h1 = document.createElement('h1')
+h1.innerText = 'Aircraft & Flights'
+body.append(h1)
 
-    if(!!textEl){
-        el.innerText = textEl
-    }
-    
-    if(classNames.length > 0){
-        el.classList.add(...classNames)
-    }
+const mainContainer = document.createElement('div')
+mainContainer.className = 'main-container'
+body.append(mainContainer)
 
-    if(!!parentEl){
-        parentEl.append(el)
-    }
+const leftPanel = document.createElement('div')
+leftPanel.className = 'left-panel'
+mainContainer.append(leftPanel)
 
-    return el
-}
+const rightPanel = document.createElement('div')
+rightPanel.className = 'right-panel'
+mainContainer.append(rightPanel)
 
-const mainCont = createEl({nameEl: 'div', classNames: ['main'], textEl: '', parentEl: body})
-const h1 = createEl({nameEl: 'h1', textEl: 'Aircraft', classNames: ['header'],  parentEl: mainCont})
-const btn = createEl({nameEl: 'button', textEl: 'Показать другой', parentEl: mainCont})
-const result = createEl({nameEl: 'div', classNames: ['result'], parentEl: mainCont})
-const resultCoords = createEl({nameEl: 'div', classNames: ['resultCoords'], parentEl: mainCont})
+const controls = document.createElement('div')
+controls.className = 'controls'
 
-const map = document.createElement('div')
-    map.id = 'map'
-    mainCont.append(map)
+const countInput = document.createElement('input')
+countInput.type = 'number'
+countInput.className = 'count-input'
+countInput.value = 3
+countInput.min = 1
+countInput.max = 15
 
-function createIcon(){
+const btn = document.createElement('button')
+btn.innerText = 'Показать самолёты'
+
+const btn5 = document.createElement('button')
+btn5.className = 'btn-preset'
+btn5.innerText = '5 карточек'
+
+const btn10 = document.createElement('button')
+btn10.className = 'btn-preset'
+btn10.innerText = '10 карточек'
+
+const btn15 = document.createElement('button')
+btn15.className = 'btn-preset'
+btn15.innerText = '15 карточек'
+
+btn5.addEventListener('click', () => {
+    countInput.value = 5
+    loadAircraft()
+})
+
+btn10.addEventListener('click', () => {
+    countInput.value = 10
+    loadAircraft()
+})
+
+btn15.addEventListener('click', () => {
+    countInput.value = 15
+    loadAircraft()
+})
+
+controls.append(countInput, btn, btn5, btn10, btn15)
+leftPanel.append(controls)
+
+const result = document.createElement('div')
+result.id = 'result'
+leftPanel.append(result)
+
+const mapContainer = document.createElement('div')
+mapContainer.id = 'map'
+rightPanel.append(mapContainer)
+
+const map = L.map('map', { attributionControl: false }).setView([51.505, -0.09], 3)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+
+let mapLayers = []
+let loadedAircrafts = []
+
+function createIcon() {
     const img = document.createElement('img')
     img.src = 'plane.svg'
     img.alt = 'Самолёт'
     img.classList.add('icon')
+    img.onerror = function() {
+        this.style.display = 'none'
+    }
     return img
 }
 
-function createImageBox(url){
+function createImageBox(url) {
     const box = document.createElement('div')
     box.classList.add('image-box')
-    
-    if(url){
+    if (url) {
         const img = document.createElement('img')
         img.src = url
-        img.onerror = function(){
+        img.onerror = function() {
             box.innerText = ''
             box.append(createIcon())
         }
         box.append(img)
-    }else{
+    } else {
         box.append(createIcon())
     }
-    
     return box
 }
 
-function createItem(label, value){
+function createItem(label, value) {
     const item = document.createElement('div')
     item.classList.add('item')
-    
-    const labelEl = document.createElement('p')
+    const labelEl = document.createElement('span')
     labelEl.classList.add('label')
     labelEl.innerText = label
-    
-    const valueEl = document.createElement('p')
+    const valueEl = document.createElement('span')
     valueEl.classList.add('value')
     valueEl.innerText = value || 'нет данных'
-    
     item.append(labelEl, valueEl)
-    
     return item
 }
 
-function showAircraft(data){
-    result.innerText = ''
-    
+function showAircraft(data, index) {
     const card = document.createElement('div')
     card.classList.add('card')
     
-    let registration = data.registration
-    let mode_s = data.mode_s
-    let type = data.type
-    let manufacturer = data.manufacturer
-    let registered_owner = data.registered_owner
-    let owner_country = data.registered_owner_country_name
-
     card.append(createImageBox(data.url_photo))
-    card.append(createItem('Регистрация', registration))
-    card.append(createItem('Mode S', mode_s))
-    card.append(createItem('Тип', type))
-    card.append(createItem('Производитель', manufacturer))
-    card.append(createItem('Владелец', registered_owner))
-    card.append(createItem('Страна', owner_country))
+    card.append(createItem('Регистрация', data.registration))
+    card.append(createItem('Тип', data.type))
+    card.append(createItem('Производитель', data.manufacturer))
+    card.append(createItem('Владелец', data.registered_owner))
+    
+    const detailsBtn = document.createElement('button')
+    detailsBtn.innerText = 'Подробнее'
+    detailsBtn.addEventListener('click', () => showDetail(index))
+    card.append(detailsBtn)
     
     result.append(card)
 }
 
-
-function loadAircraft(){
-    fetch('https://api.adsbdb.com/v0/aircraft/random')
-        .then(response => response.json())
-        .then(data=>{
-            if(data.response && data.response.aircraft){
-                showAircraft(data.response.aircraft)
-            }
-        })
-        .catch(()=>{
-            result.innerText = 'Ошибка загрузки'
-        })
-        .then(()=>{
-            btn.innerText = 'Показать другой'
-        })
-}
-
-function loadCallsign(){
-    fetch('https://api.adsbdb.com/v0/callsign/random')
-        .then(response => response.json())
-        .then(data=>{
-            if(data.response && data.response.flightroute){
-                
-                showCoords(data.response.flightroute)
-            }
-        })
-        .catch(()=>{
-            resultCoords.innerText = 'Ошибка загрузки'
-        })
-}
-
-btn.addEventListener('click', () => {
-    loadAircraft()
-    loadCallsign()
-})
-
-loadAircraft()
-loadCallsign()
-
-function MAP(data){
-    let map = L.map('map').setView([data.origin.latitude, data.origin.longitude], 13)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-
-    return map
+function showDetail(index) {
+    const aircraft = loadedAircrafts[index]
+    result.innerText = ''
     
+    const card = document.createElement('div')
+    card.classList.add('card', 'detail-card')
+    
+    card.append(createImageBox(aircraft.url_photo))
+    card.append(createItem('Регистрация', aircraft.registration))
+    card.append(createItem('Mode S', aircraft.mode_s))
+    card.append(createItem('Тип', aircraft.type))
+    card.append(createItem('Производитель', aircraft.manufacturer))
+    card.append(createItem('Владелец', aircraft.registered_owner))
+    card.append(createItem('Страна', aircraft.registered_owner_country_name))
+    
+    const coordsSection = document.createElement('div')
+    coordsSection.className = 'coords-loading'
+    coordsSection.innerText = 'Загрузка координат маршрута...'
+    card.append(coordsSection)
+    
+    const backBtn = document.createElement('button')
+    backBtn.innerText = '← Назад к списку'
+    backBtn.addEventListener('click', showList)
+    card.append(backBtn)
+    
+    result.append(card)
+    
+    fetch('https://api.adsbdb.com/v0/callsign/random')
+        .then(r => r.json())
+        .then(data => {
+            coordsSection.innerText = ''
+            coordsSection.classList.add('coords')
+            
+            if (data.response && data.response.flightroute) {
+                const route = data.response.flightroute
+                const origin = route.origin || {}
+                const destination = route.destination || {}
+                
+                let originCoords
+
+if (origin.latitude && origin.longitude) {
+    originCoords = `${origin.latitude}, ${origin.longitude}`
+} else {
+    originCoords = 'нет данных'
 }
-let mapBox = MAP({
-    origin: {
-        latitude: 51.505,
-        longitude:  -0.09,
-    }
-})
-
-
-
-
-function showCoords(data){
-    resultCoords.innerText = ''
-
-    const coord_container = document.createElement('div')
-    coord_container.classList.add('coords')
-
-    coord_container.append(createItem('Широта места отправления', data.origin.latitude))
-    coord_container.append(createItem('Долгота места отправления', data.origin.longitude))
-    coord_container.append(createItem('Широта места прибытия', data.destination.latitude))
-    coord_container.append(createItem('Долгота места прибытия', data.destination.longitude))
-
-    resultCoords.append(coord_container)
-
-    let testBtn =createEl({nameEl: 'button', textEl: 'test', parentEl: document.body})
-    testBtn.addEventListener('click', () =>{
-      mapBox.setView([data.origin.latitude, data.origin.longitude], 4) 
- 
-        /*  MAP({
-            origin: {
-                latitude: data.origin.latitude,
-                longitude:  data.origin.longitude,
+                
+                coordsSection.append(createItem('Аэропорт отправления', origin.name))
+                coordsSection.append(createItem('Координаты отправления', originCoords))
+                coordsSection.append(createItem('Аэропорт прибытия', destination.name))
+                coordsSection.append(createItem('Координаты прибытия', destCoords))
+                
+                mapLayers.forEach(layer => map.removeLayer(layer))
+                mapLayers = []
+                
+                if (origin.latitude && destination.latitude) {
+                    const m1 = L.marker([origin.latitude, origin.longitude]).addTo(map)
+                        .bindPopup(`<b>Отправление:</b><br>${origin.name || 'нет данных'}`)
+                    const m2 = L.marker([destination.latitude, destination.longitude]).addTo(map)
+                        .bindPopup(`<b>Прибытие:</b><br>${destination.name || 'нет данных'}`)
+                    const line = L.polyline(
+                        [[origin.latitude, origin.longitude], [destination.latitude, destination.longitude]], 
+                        { color: '#2e7d32', weight: 3, dashArray: '10, 5' }
+                    ).addTo(map)
+                    
+                    mapLayers.push(m1, m2, line)
+                    map.fitBounds(L.featureGroup([m1, m2]).getBounds().pad(0.2))
+                }
+            } else {
+                coordsSection.innerText = 'нет данных о маршруте'
             }
-        })  */
-    })
-
-  
+        })
+        .catch(() => {
+            coordsSection.innerText = 'Ошибка загрузки координат'
+        })
 }
+
+function showList() {
+    result.innerText = ''
+    loadedAircrafts.forEach((aircraft, idx) => showAircraft(aircraft, idx))
+}
+
+function loadAircraft() {
+    let count = parseInt(countInput.value) || 1
+    if (count > 15) count = 15
+    if (count < 1) count = 1
+    
+    result.innerText = ''
+    btn.innerText = 'Загрузка...'
+    btn.disabled = true
+    loadedAircrafts = []
+    
+    mapLayers.forEach(layer => map.removeLayer(layer))
+    mapLayers = []
+    
+    let loadedCount = 0
+    let totalCount = count
+    
+    for (let i = 0; i < count; i++) {
+        fetch('https://api.adsbdb.com/v0/aircraft/random')
+            .then(r => r.json())
+            .then(data => {
+                if (data.response && data.response.aircraft) {
+                    const aircraft = data.response.aircraft
+                    loadedAircrafts.push(aircraft)
+                    showAircraft(aircraft, loadedAircrafts.length - 1)
+                }
+                loadedCount++
+                checkIfDone()
+            })
+            .catch(() => {
+                loadedCount++
+                checkIfDone()
+            })
+    }
+    
+    function checkIfDone() {
+        if (loadedCount === totalCount) {
+            btn.innerText = 'Показать самолёты'
+            btn.disabled = false
+            
+            if (loadedAircrafts.length === 0) {
+                const empty = document.createElement('div')
+                empty.className = 'empty'
+                empty.innerText = 'Не удалось загрузить самолёты'
+                result.append(empty)
+            }
+        }
+    }
+}
+
+btn.addEventListener('click', loadAircraft)
+loadAircraft()
