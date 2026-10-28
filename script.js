@@ -132,7 +132,7 @@ function showAircraft(data, index) {
     result.append(card)
 }
 
-function showDetail(index) {
+function showDetail(index){
     const aircraft = loadedAircrafts[index]
     result.innerText = ''
     
@@ -160,22 +160,17 @@ function showDetail(index) {
     result.append(card)
 
     fetch('https://api.adsbdb.com/v0/callsign/random')
-        .then(response => response.json())
-        .then(data=>{
-            if(data.response && data.response.flightroute){
-                
-                showCoords(data.response.flightroute)
-            }
-        })
-        .catch(()=>{
-            resultCoords.innerText = 'Ошибка загрузки'
-        })
-
-if (origin.latitude && origin.longitude) {
-    originCoords = `${origin.latitude}, ${origin.longitude}`
-} else {
-    originCoords = 'нет данных'
-}
+    .then(r => r.json())
+    .then(data => {
+        coordsSection.innerText = ''
+        coordsSection.classList.add('coords')
+        
+        if (data.response && data.response.flightroute) {
+            const route = data.response.flightroute
+            const origin = route.origin 
+            const destination = route.destination 
+            
+            let originCoords
                 
                 coordsSection.append(createItem('Аэропорт отправления', origin.name))
                 coordsSection.append(createItem('Координаты отправления', originCoords))
@@ -183,16 +178,16 @@ if (origin.latitude && origin.longitude) {
                 coordsSection.append(createItem('Координаты прибытия', destCoords))
                 
                 mapLayers.forEach(layer => map.removeLayer(layer))
-                mapLayers = []
+                mapLayers = []}
                 
-                if (origin.latitude && destination.latitude) {
-                    const m1 = L.marker([origin.latitude, origin.longitude]).addTo(map)
-                    .bindPopup(`${origin.longitude} место отправления ${origin.name}`).openPopup()
+                // if (origin.latitude && destination.latitude) {
+                    // const m1 = L.marker([origin.latitude, origin.longitude]).addTo(map)
+                    // .bindPopup(`${origin.longitude} место отправления ${origin.name}`).openPopup()
 
-                    const m2 = L.marker([destination.latitude, destination.longitude]).addTo(map)
-                    .bindPopup(`${destination.longitude} место прибытия ${destination.name}`).openPopup()
+                    // const m2 = L.marker([destination.latitude, destination.longitude]).addTo(map)
+                    // .bindPopup(`${destination.longitude} место прибытия ${destination.name}`).openPopup()
 
-                    mapLayers.push(m1, m2)
+                    // mapLayers.push(m1, m2)
 
                     
                     // const m1 = L.marker([origin.latitude, origin.longitude]).addTo(map)
@@ -206,7 +201,7 @@ if (origin.latitude && origin.longitude) {
                     
                     // mapLayers.push(m1, m2, line)
                     // map.fitBounds(L.featureGroup([m1, m2]).getBounds().pad(0.2))
-                }}
+    })
 
 function showList() {
     result.innerText = ''
