@@ -158,8 +158,7 @@ function showDetail(index) {
     card.append(backBtn)
     
     result.append(card)
-    
-    function loadCallsign(){
+
     fetch('https://api.adsbdb.com/v0/callsign/random')
         .then(response => response.json())
         .then(data=>{
@@ -171,7 +170,6 @@ function showDetail(index) {
         .catch(()=>{
             resultCoords.innerText = 'Ошибка загрузки'
         })
-}
 
 if (origin.latitude && origin.longitude) {
     originCoords = `${origin.latitude}, ${origin.longitude}`
@@ -208,15 +206,7 @@ if (origin.latitude && origin.longitude) {
                     
                     // mapLayers.push(m1, m2, line)
                     // map.fitBounds(L.featureGroup([m1, m2]).getBounds().pad(0.2))
-                }
-            } else {
-                coordsSection.innerText = 'нет данных о маршруте'
-            }
-        })
-        .catch(() => {
-            coordsSection.innerText = 'Ошибка загрузки координат'
-        })
-}
+                }}
 
 function showList() {
     result.innerText = ''
