@@ -22,7 +22,7 @@ controls.className = 'controls'
 const countInput = document.createElement('input')
 countInput.type = 'number'
 countInput.className = 'count-input'
-countInput.value = 3
+countInput.value = 1
 countInput.min = 1
 countInput.max = 15
 
@@ -30,15 +30,15 @@ const btn = document.createElement('button')
 btn.innerText = 'Показать самолёты'
 
 const btn5 = document.createElement('button')
-btn5.className = 'btn-preset'
+btn5.className = 'btn-count'
 btn5.innerText = '5 карточек'
 
 const btn10 = document.createElement('button')
-btn10.className = 'btn-preset'
+btn10.className = 'btn-count'
 btn10.innerText = '10 карточек'
 
 const btn15 = document.createElement('button')
-btn15.className = 'btn-preset'
+btn15.className = 'btn-count'
 btn15.innerText = '15 карточек'
 
 btn5.addEventListener('click', () => {
@@ -149,28 +149,29 @@ function showDetail(index) {
     
     const coordsSection = document.createElement('div')
     coordsSection.className = 'coords-loading'
-    coordsSection.innerText = 'Загрузка координат маршрута...'
+    coordsSection.innerText = 'Загрузка координат...'
     card.append(coordsSection)
     
     const backBtn = document.createElement('button')
-    backBtn.innerText = '← Назад к списку'
+    backBtn.innerText = 'Назад к списку'
     backBtn.addEventListener('click', showList)
     card.append(backBtn)
     
     result.append(card)
     
+    function loadCallsign(){
     fetch('https://api.adsbdb.com/v0/callsign/random')
-        .then(r => r.json())
-        .then(data => {
-            coordsSection.innerText = ''
-            coordsSection.classList.add('coords')
-            
-            if (data.response && data.response.flightroute) {
-                const route = data.response.flightroute
-                const origin = route.origin || {}
-                const destination = route.destination || {}
+        .then(response => response.json())
+        .then(data=>{
+            if(data.response && data.response.flightroute){
                 
-                let originCoords
+                showCoords(data.response.flightroute)
+            }
+        })
+        .catch(()=>{
+            resultCoords.innerText = 'Ошибка загрузки'
+        })
+}
 
 if (origin.latitude && origin.longitude) {
     originCoords = `${origin.latitude}, ${origin.longitude}`
@@ -188,16 +189,25 @@ if (origin.latitude && origin.longitude) {
                 
                 if (origin.latitude && destination.latitude) {
                     const m1 = L.marker([origin.latitude, origin.longitude]).addTo(map)
-                        .bindPopup(`<b>Отправление:</b><br>${origin.name || 'нет данных'}`)
+                    .bindPopup(`${origin.longitude} место отправления ${origin.name}`).openPopup()
+
                     const m2 = L.marker([destination.latitude, destination.longitude]).addTo(map)
-                        .bindPopup(`<b>Прибытие:</b><br>${destination.name || 'нет данных'}`)
-                    const line = L.polyline(
-                        [[origin.latitude, origin.longitude], [destination.latitude, destination.longitude]], 
-                        { color: '#2e7d32', weight: 3, dashArray: '10, 5' }
-                    ).addTo(map)
+                    .bindPopup(`${destination.longitude} место прибытия ${destination.name}`).openPopup()
+
+                    mapLayers.push(m1, m2)
+
                     
-                    mapLayers.push(m1, m2, line)
-                    map.fitBounds(L.featureGroup([m1, m2]).getBounds().pad(0.2))
+                    // const m1 = L.marker([origin.latitude, origin.longitude]).addTo(map)
+                    //     .bindPopup(`<b>Отправление:</b><br>${origin.name || 'нет данных'}`)
+                    // const m2 = L.marker([destination.latitude, destination.longitude]).addTo(map)
+                    //     .bindPopup(`<b>Прибытие:</b><br>${destination.name || 'нет данных'}`)
+                    // const line = L.polyline(
+                    //     [[origin.latitude, origin.longitude], [destination.latitude, destination.longitude]], 
+                    //     { color: '#2e7d32', weight: 3, dashArray: '10, 5' }
+                    // ).addTo(map)
+                    
+                    // mapLayers.push(m1, m2, line)
+                    // map.fitBounds(L.featureGroup([m1, m2]).getBounds().pad(0.2))
                 }
             } else {
                 coordsSection.innerText = 'нет данных о маршруте'
